@@ -165,6 +165,8 @@ color:white;
 
 <h2 id="judulUser"></h2>
 
+<button onclick="ambilData()">Refresh Data</button>
+
 <div class="dashboard">
 
 <div class="box saldo">
@@ -239,7 +241,7 @@ Kategori
 
 <script>
 
-/* GOOGLE APPS SCRIPT API */
+/* API GOOGLE SCRIPT */
 
 const API_URL="https://script.google.com/macros/s/AKfycbwRgLDXjQOsnZ5Z1y1HTq6PYjT0O-FqFQUBaFBRyJ3OxIXtVlaP_bN3YDPoRf8ElUBU/exec";
 
@@ -254,7 +256,7 @@ document.getElementById("loading").style.display="none";
 document.getElementById("loginPage").style.display="flex";
 },1500);
 
-/* USER LIST */
+/* DAFTAR USER */
 
 let daftarUser=["admin"];
 
@@ -290,28 +292,51 @@ document.getElementById("judulUser").innerHTML="Dashboard Keuangan - "+username;
 document.getElementById("loginPage").style.display="none";
 document.getElementById("app").style.display="block";
 
+ambilData();
+
 }
 
-/* TAMBAH DATA */
+/* AMBIL DATA DARI GOOGLE SHEETS */
 
-function tambahData(){
+function ambilData(){
 
-let tanggal=document.getElementById("tanggal").value;
+fetch(API_URL)
+.then(res=>res.json())
+.then(data=>{
 
-let pemasukan=parseInt(document.getElementById("pemasukan").value)||0;
-let pengeluaran=parseInt(document.getElementById("pengeluaran").value)||0;
+let tabel=document.getElementById("tabel");
 
-let kategori=document.getElementById("kategori").value;
+tabel.innerHTML=`
+<tr>
+<th>Nama</th>
+<th>Tanggal</th>
+<th>Pemasukan</th>
+<th>Pengeluaran</th>
+<th>Kategori</th>
+</tr>
+`;
 
-if(tanggal===""){
-alert("Tanggal harus diisi");
-return;
+totalMasuk=0;
+totalKeluar=0;
+
+data.forEach(row=>{
+
+if(userID==="admin" || row.nama===userID){
+
+let r=tabel.insertRow();
+
+r.insertCell(0).innerHTML=row.nama;
+r.insertCell(1).innerHTML=row.tanggal;
+r.insertCell(2).innerHTML="Rp "+Number(row.pemasukan).toLocaleString();
+r.insertCell(3).innerHTML="Rp "+Number(row.pengeluaran).toLocaleString();
+r.insertCell(4).innerHTML=row.kategori;
+
+totalMasuk+=Number(row.pemasukan);
+totalKeluar+=Number(row.pengeluaran);
+
 }
 
-/* HITUNG SALDO */
-
-totalMasuk+=pemasukan;
-totalKeluar+=pengeluaran;
+});
 
 let saldo=totalMasuk-totalKeluar;
 
@@ -319,7 +344,23 @@ document.getElementById("totalMasuk").innerHTML="Rp "+totalMasuk.toLocaleString(
 document.getElementById("totalKeluar").innerHTML="Rp "+totalKeluar.toLocaleString();
 document.getElementById("saldo").innerHTML="Rp "+saldo.toLocaleString();
 
-/* DATA */
+});
+
+}
+
+/* TAMBAH DATA */
+
+function tambahData(){
+
+let tanggal=document.getElementById("tanggal").value;
+let pemasukan=parseInt(document.getElementById("pemasukan").value)||0;
+let pengeluaran=parseInt(document.getElementById("pengeluaran").value)||0;
+let kategori=document.getElementById("kategori").value;
+
+if(tanggal===""){
+alert("Tanggal harus diisi");
+return;
+}
 
 let data={
 nama:userID,
@@ -329,38 +370,19 @@ pengeluaran:pengeluaran,
 kategori:kategori
 };
 
-/* KIRIM KE GOOGLE SHEETS */
-
 fetch(API_URL,{
 method:"POST",
 body:JSON.stringify(data)
 })
 .then(res=>res.text())
 .then(res=>{
-console.log("Server:",res);
-alert("Data berhasil disimpan ke Google Sheets");
+alert("Data berhasil disimpan");
+ambilData();
 })
 .catch(err=>{
-console.log(err);
 alert("Gagal mengirim data");
+console.log(err);
 });
-
-/* TABEL */
-
-let tabel=document.getElementById("tabel");
-
-let row=tabel.insertRow();
-
-row.insertCell(0).innerHTML=userID;
-row.insertCell(1).innerHTML=tanggal;
-row.insertCell(2).innerHTML="Rp "+pemasukan.toLocaleString();
-row.insertCell(3).innerHTML="Rp "+pengeluaran.toLocaleString();
-row.insertCell(4).innerHTML=kategori;
-
-/* RESET */
-
-document.getElementById("pemasukan").value="";
-document.getElementById("pengeluaran").value="";
 
 }
 
