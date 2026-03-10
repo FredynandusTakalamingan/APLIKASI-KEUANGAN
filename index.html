@@ -1,13 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
+
 <head>
 
+<meta charset="UTF-8">
 <title>FINTRACK - Aplikasi Keuangan Siswa</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
 
@@ -29,7 +28,6 @@ display:flex;
 justify-content:center;
 align-items:center;
 flex-direction:column;
-font-size:20px;
 z-index:999;
 }
 
@@ -44,20 +42,20 @@ align-items:center;
 
 .card{
 background:white;
-padding:30px;
+padding:35px;
 border-radius:15px;
 width:320px;
-box-shadow:0 4px 15px rgba(0,0,0,0.2);
+box-shadow:0 5px 20px rgba(0,0,0,0.2);
 text-align:center;
 }
 
 .logo{
-width:80px;
+width:70px;
 margin-bottom:10px;
 }
 
 input,select{
-width:90%;
+width:92%;
 padding:10px;
 margin:6px;
 border-radius:6px;
@@ -65,16 +63,21 @@ border:1px solid #ccc;
 }
 
 button{
-width:95%;
+width:96%;
 padding:10px;
 background:#2c7be5;
 border:none;
 color:white;
 border-radius:6px;
 cursor:pointer;
+font-weight:bold;
 }
 
-/* DASHBOARD */
+button:hover{
+background:#1b5ed8;
+}
+
+/* APP */
 
 .container{
 padding:20px;
@@ -84,6 +87,7 @@ padding:20px;
 display:flex;
 gap:15px;
 flex-wrap:wrap;
+margin-top:10px;
 }
 
 .box{
@@ -98,6 +102,14 @@ border-radius:10px;
 .masuk{background:#00a65a;}
 .keluar{background:#dd4b39;}
 
+.section{
+background:white;
+padding:20px;
+border-radius:10px;
+margin-top:20px;
+box-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
+
 table{
 border-collapse:collapse;
 width:100%;
@@ -110,12 +122,9 @@ padding:8px;
 text-align:center;
 }
 
-.section{
-background:white;
-padding:20px;
-border-radius:10px;
-margin-top:20px;
-box-shadow:0 2px 8px rgba(0,0,0,0.1);
+th{
+background:#2c7be5;
+color:white;
 }
 
 </style>
@@ -124,10 +133,14 @@ box-shadow:0 2px 8px rgba(0,0,0,0.1);
 
 <body>
 
+<!-- LOADING -->
+
 <div id="loading">
 <h1>FINTRACK</h1>
 <p>Memuat aplikasi...</p>
 </div>
+
+<!-- LOGIN -->
 
 <div id="loginPage" style="display:none">
 
@@ -135,18 +148,18 @@ box-shadow:0 2px 8px rgba(0,0,0,0.1);
 
 <img src="https://cdn-icons-png.flaticon.com/512/2331/2331943.png" class="logo">
 
-<h2>FINTRACK</h2>
+<h2>Login FINTRACK</h2>
 
-<p style="color:gray">Aplikasi Keuangan Siswa</p>
+<input id="username" placeholder="Username (admin / siswa1 - siswa20)">
+<input id="password" type="password" placeholder="Password">
 
-<input id="nama" placeholder="Nama Siswa">
-<input id="kelas" placeholder="Kelas">
-
-<button onclick="login()">Masuk</button>
+<button onclick="login()">Login</button>
 
 </div>
 
 </div>
+
+<!-- APP -->
 
 <div id="app" style="display:none" class="container">
 
@@ -156,20 +169,22 @@ box-shadow:0 2px 8px rgba(0,0,0,0.1);
 
 <div class="box saldo">
 <h4>Saldo</h4>
-<h2 id="saldo">0</h2>
+<h2 id="saldo">Rp 0</h2>
 </div>
 
 <div class="box masuk">
-<h4>Pemasukan</h4>
-<h2 id="totalMasuk">0</h2>
+<h4>Total Pemasukan</h4>
+<h2 id="totalMasuk">Rp 0</h2>
 </div>
 
 <div class="box keluar">
-<h4>Pengeluaran</h4>
-<h2 id="totalKeluar">0</h2>
+<h4>Total Pengeluaran</h4>
+<h2 id="totalKeluar">Rp 0</h2>
 </div>
 
 </div>
+
+<!-- INPUT DATA -->
 
 <div class="section">
 
@@ -196,18 +211,20 @@ Kategori
 
 <br><br>
 
-<button onclick="tambahData()">Simpan</button>
-<button onclick="exportExcel()">Export Excel</button>
+<button onclick="tambahData()">Simpan Data</button>
 
 </div>
 
+<!-- RIWAYAT -->
+
 <div class="section">
 
-<h3>Tabel Pencatatan</h3>
+<h3>Riwayat Keuangan</h3>
 
 <table id="tabel">
 
 <tr>
+<th>Nama</th>
 <th>Tanggal</th>
 <th>Pemasukan</th>
 <th>Pengeluaran</th>
@@ -218,99 +235,60 @@ Kategori
 
 </div>
 
-<div class="section">
-
-<h3>Skor Pengelolaan Keuangan</h3>
-
-Skor : <span id="skor">0</span>
-
-</div>
-
-<div class="section">
-
-<h3>Grafik Pengeluaran</h3>
-
-<canvas id="grafik"></canvas>
-
-</div>
-
-<div class="section">
-
-<h3>Analisis Penelitian Otomatis</h3>
-
-<button onclick="analisisAI()">Buat Analisis</button>
-
-<p id="hasilAI"></p>
-
-</div>
-
 </div>
 
 <script>
 
-/* FIREBASE CONFIG */
-/* GANTI DENGAN FIREBASE ANDA */
+/* GOOGLE APPS SCRIPT API */
 
-var firebaseConfig = {
-apiKey: "APIKEY",
-authDomain: "fintrack.firebaseapp.com",
-databaseURL: "https://fintrack-default-rtdb.firebaseio.com/",
-projectId: "fintrack",
-storageBucket: "fintrack.appspot.com",
-messagingSenderId: "123456",
-appId: "APPID"
-};
-
-firebase.initializeApp(firebaseConfig);
-
-var db = firebase.database();
-
-/* LOADING */
-
-setTimeout(function(){
-
-document.getElementById("loading").style.display="none";
-document.getElementById("loginPage").style.display="flex";
-
-},2000);
-
-/* DATA */
+const API_URL="https://script.google.com/macros/s/AKfycbwRgLDXjQOsnZ5Z1y1HTq6PYjT0O-FqFQUBaFBRyJ3OxIXtVlaP_bN3YDPoRf8ElUBU/exec";
 
 let userID="";
 let totalMasuk=0;
 let totalKeluar=0;
 
-let dataKategori={
-Makan:0,
-Transport:0,
-Pulsa:0,
-Hiburan:0,
-Lainnya:0
-};
+/* LOADING */
+
+setTimeout(function(){
+document.getElementById("loading").style.display="none";
+document.getElementById("loginPage").style.display="flex";
+},1500);
+
+/* USER LIST */
+
+let daftarUser=["admin"];
+
+for(let i=1;i<=20;i++){
+daftarUser.push("siswa"+i);
+}
 
 /* LOGIN */
 
 function login(){
 
-let nama=document.getElementById("nama").value;
-let kelas=document.getElementById("kelas").value;
+let username=document.getElementById("username").value.toLowerCase();
+let password=document.getElementById("password").value;
 
-if(nama==""){
-
-alert("Isi nama siswa");
+if(!daftarUser.includes(username)){
+alert("Username tidak terdaftar");
 return;
-
 }
 
-userID=nama+"_"+kelas;
+if(password!=="admin"){
+alert("Password salah");
+return;
+}
 
-document.getElementById("judulUser").innerHTML=
-"Dashboard Keuangan - "+nama+" ("+kelas+")";
+userID=username;
+
+if(username==="admin"){
+document.getElementById("judulUser").innerHTML="Dashboard Admin FINTRACK";
+}else{
+document.getElementById("judulUser").innerHTML="Dashboard Keuangan - "+username;
+}
 
 document.getElementById("loginPage").style.display="none";
 document.getElementById("app").style.display="block";
-
-loadData();
 
 }
 
@@ -319,198 +297,70 @@ loadData();
 function tambahData(){
 
 let tanggal=document.getElementById("tanggal").value;
-let pemasukan=Number(document.getElementById("pemasukan").value);
-let pengeluaran=Number(document.getElementById("pengeluaran").value);
+
+let pemasukan=parseInt(document.getElementById("pemasukan").value)||0;
+let pengeluaran=parseInt(document.getElementById("pengeluaran").value)||0;
+
 let kategori=document.getElementById("kategori").value;
 
+if(tanggal===""){
+alert("Tanggal harus diisi");
+return;
+}
+
+/* HITUNG SALDO */
+
+totalMasuk+=pemasukan;
+totalKeluar+=pengeluaran;
+
+let saldo=totalMasuk-totalKeluar;
+
+document.getElementById("totalMasuk").innerHTML="Rp "+totalMasuk.toLocaleString();
+document.getElementById("totalKeluar").innerHTML="Rp "+totalKeluar.toLocaleString();
+document.getElementById("saldo").innerHTML="Rp "+saldo.toLocaleString();
+
+/* DATA */
+
 let data={
+nama:userID,
 tanggal:tanggal,
 pemasukan:pemasukan,
 pengeluaran:pengeluaran,
 kategori:kategori
 };
 
-db.ref("keuangan/"+userID).push(data);
+/* KIRIM KE GOOGLE SHEETS */
 
-}
+fetch(API_URL,{
+method:"POST",
+body:JSON.stringify(data)
+})
+.then(res=>res.text())
+.then(res=>{
+console.log("Server:",res);
+alert("Data berhasil disimpan ke Google Sheets");
+})
+.catch(err=>{
+console.log(err);
+alert("Gagal mengirim data");
+});
 
-/* LOAD DATA REALTIME */
-
-function loadData(){
-
-db.ref("keuangan/"+userID).on("value",function(snapshot){
+/* TABEL */
 
 let tabel=document.getElementById("tabel");
 
-tabel.innerHTML=`
-<tr>
-<th>Tanggal</th>
-<th>Pemasukan</th>
-<th>Pengeluaran</th>
-<th>Kategori</th>
-</tr>
-`;
-
-totalMasuk=0;
-totalKeluar=0;
-
-dataKategori={
-Makan:0,
-Transport:0,
-Pulsa:0,
-Hiburan:0,
-Lainnya:0
-};
-
-snapshot.forEach(function(child){
-
-let data=child.val();
-
 let row=tabel.insertRow();
 
-row.insertCell(0).innerHTML=data.tanggal;
-row.insertCell(1).innerHTML=data.pemasukan;
-row.insertCell(2).innerHTML=data.pengeluaran;
-row.insertCell(3).innerHTML=data.kategori;
+row.insertCell(0).innerHTML=userID;
+row.insertCell(1).innerHTML=tanggal;
+row.insertCell(2).innerHTML="Rp "+pemasukan.toLocaleString();
+row.insertCell(3).innerHTML="Rp "+pengeluaran.toLocaleString();
+row.insertCell(4).innerHTML=kategori;
 
-totalMasuk+=Number(data.pemasukan);
-totalKeluar+=Number(data.pengeluaran);
+/* RESET */
 
-dataKategori[data.kategori]+=Number(data.pengeluaran);
-
-});
-
-updateDashboard();
-updateGrafik();
-hitungSkor();
-
-});
-
-}
-
-/* DASHBOARD */
-
-function updateDashboard(){
-
-let saldo=totalMasuk-totalKeluar;
-
-document.getElementById("saldo").innerHTML=saldo;
-document.getElementById("totalMasuk").innerHTML=totalMasuk;
-document.getElementById("totalKeluar").innerHTML=totalKeluar;
-
-}
-
-/* SKOR */
-
-function hitungSkor(){
-
-let saldo=totalMasuk-totalKeluar;
-
-let skor=50;
-
-if(saldo>0) skor=70;
-if(saldo>totalMasuk*0.3) skor=85;
-if(saldo>totalMasuk*0.5) skor=100;
-
-document.getElementById("skor").innerHTML=skor;
-
-}
-
-/* GRAFIK */
-
-let ctx=document.getElementById("grafik").getContext("2d");
-
-let grafik=new Chart(ctx,{
-type:'pie',
-data:{
-labels:["Makan","Transport","Pulsa","Hiburan","Lainnya"],
-datasets:[{data:[0,0,0,0,0]}]
-}
-});
-
-function updateGrafik(){
-
-grafik.data.datasets[0].data=[
-
-dataKategori.Makan,
-dataKategori.Transport,
-dataKategori.Pulsa,
-dataKategori.Hiburan,
-dataKategori.Lainnya
-
-];
-
-grafik.update();
-
-}
-
-/* EXPORT */
-
-function exportExcel(){
-
-let tabel=document.getElementById("tabel").outerHTML;
-
-let data="data:application/vnd.ms-excel,"+encodeURIComponent(tabel);
-
-let link=document.createElement("a");
-
-link.href=data;
-link.download="data_keuangan.xls";
-
-link.click();
-
-}
-
-/* ANALISIS */
-
-function analisisAI(){
-
-let terbesar="";
-let nilai=0;
-
-for(let k in dataKategori){
-
-if(dataKategori[k]>nilai){
-
-nilai=dataKategori[k];
-terbesar=k;
-
-}
-
-}
-
-let saldo=totalMasuk-totalKeluar;
-
-let kesimpulan="";
-
-if(saldo>totalMasuk*0.4){
-
-kesimpulan="Pengelolaan keuangan siswa sangat baik.";
-
-}
-
-else if(saldo>totalMasuk*0.2){
-
-kesimpulan="Pengelolaan keuangan cukup baik.";
-
-}
-
-else{
-
-kesimpulan="Pengelolaan keuangan perlu ditingkatkan.";
-
-}
-
-let teks=`
-Kategori pengeluaran terbesar: ${terbesar}
-Total pemasukan: ${totalMasuk}
-Total pengeluaran: ${totalKeluar}
-Saldo akhir: ${saldo}
-
-${kesimpulan}
-`;
-
-document.getElementById("hasilAI").innerText=teks;
+document.getElementById("pemasukan").value="";
+document.getElementById("pengeluaran").value="";
 
 }
 
