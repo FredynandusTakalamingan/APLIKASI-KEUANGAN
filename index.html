@@ -6,6 +6,8 @@
 <meta charset="UTF-8">
 <title>FINTRACK - Aplikasi Keuangan Siswa</title>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 
 body{
@@ -144,6 +146,8 @@ color:white;
 
 <div class="card">
 
+<img src="https://cdn-icons-png.flaticon.com/512/2331/2331943.png" class="logo">
+
 <h2>Login FINTRACK</h2>
 
 <input id="username" placeholder="Username (admin / siswa1 - siswa20)">
@@ -235,6 +239,8 @@ Kategori
 
 <script>
 
+/* GOOGLE APPS SCRIPT API */
+
 const API_URL="https://script.google.com/macros/s/AKfycbwRgLDXjQOsnZ5Z1y1HTq6PYjT0O-FqFQUBaFBRyJ3OxIXtVlaP_bN3YDPoRf8ElUBU/exec";
 
 let userID="";
@@ -275,55 +281,14 @@ return;
 
 userID=username;
 
-document.getElementById("judulUser").innerHTML="Dashboard - "+username;
+if(username==="admin"){
+document.getElementById("judulUser").innerHTML="Dashboard Admin FINTRACK";
+}else{
+document.getElementById("judulUser").innerHTML="Dashboard Keuangan - "+username;
+}
 
 document.getElementById("loginPage").style.display="none";
 document.getElementById("app").style.display="block";
-
-loadData();
-
-}
-
-/* LOAD DATA */
-
-function loadData(){
-
-fetch(API_URL)
-.then(res=>res.json())
-.then(data=>{
-
-let tabel=document.getElementById("tabel");
-
-data.forEach(row=>{
-
-let r=tabel.insertRow();
-
-r.insertCell(0).innerHTML=row[0];
-r.insertCell(1).innerHTML=row[1];
-r.insertCell(2).innerHTML="Rp "+Number(row[2]).toLocaleString();
-r.insertCell(3).innerHTML="Rp "+Number(row[3]).toLocaleString();
-r.insertCell(4).innerHTML=row[4];
-
-totalMasuk+=Number(row[2]);
-totalKeluar+=Number(row[3]);
-
-});
-
-updateSaldo();
-
-});
-
-}
-
-/* UPDATE SALDO */
-
-function updateSaldo(){
-
-let saldo=totalMasuk-totalKeluar;
-
-document.getElementById("totalMasuk").innerHTML="Rp "+totalMasuk.toLocaleString();
-document.getElementById("totalKeluar").innerHTML="Rp "+totalKeluar.toLocaleString();
-document.getElementById("saldo").innerHTML="Rp "+saldo.toLocaleString();
 
 }
 
@@ -343,6 +308,19 @@ alert("Tanggal harus diisi");
 return;
 }
 
+/* HITUNG SALDO */
+
+totalMasuk+=pemasukan;
+totalKeluar+=pengeluaran;
+
+let saldo=totalMasuk-totalKeluar;
+
+document.getElementById("totalMasuk").innerHTML="Rp "+totalMasuk.toLocaleString();
+document.getElementById("totalKeluar").innerHTML="Rp "+totalKeluar.toLocaleString();
+document.getElementById("saldo").innerHTML="Rp "+saldo.toLocaleString();
+
+/* DATA */
+
 let data={
 nama:userID,
 tanggal:tanggal,
@@ -351,15 +329,38 @@ pengeluaran:pengeluaran,
 kategori:kategori
 };
 
+/* KIRIM KE GOOGLE SHEETS */
+
 fetch(API_URL,{
 method:"POST",
-mode:"no-cors",
 body:JSON.stringify(data)
+})
+.then(res=>res.text())
+.then(res=>{
+console.log("Server:",res);
+alert("Data berhasil disimpan ke Google Sheets");
+})
+.catch(err=>{
+console.log(err);
+alert("Gagal mengirim data");
 });
 
-alert("Data berhasil disimpan");
+/* TABEL */
 
-location.reload();
+let tabel=document.getElementById("tabel");
+
+let row=tabel.insertRow();
+
+row.insertCell(0).innerHTML=userID;
+row.insertCell(1).innerHTML=tanggal;
+row.insertCell(2).innerHTML="Rp "+pemasukan.toLocaleString();
+row.insertCell(3).innerHTML="Rp "+pengeluaran.toLocaleString();
+row.insertCell(4).innerHTML=kategori;
+
+/* RESET */
+
+document.getElementById("pemasukan").value="";
+document.getElementById("pengeluaran").value="";
 
 }
 
