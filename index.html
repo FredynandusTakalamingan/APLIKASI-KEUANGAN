@@ -6,8 +6,6 @@
 <meta charset="UTF-8">
 <title>FINTRACK - Aplikasi Keuangan Siswa</title>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <style>
 
 body{
@@ -146,8 +144,6 @@ color:white;
 
 <div class="card">
 
-<img src="https://cdn-icons-png.flaticon.com/512/2331/2331943.png" class="logo">
-
 <h2>Login FINTRACK</h2>
 
 <input id="username" placeholder="Username (admin / siswa1 - siswa20)">
@@ -239,8 +235,6 @@ Kategori
 
 <script>
 
-/* URL GOOGLE APPS SCRIPT */
-
 const API_URL="https://script.google.com/macros/s/AKfycbwRgLDXjQOsnZ5Z1y1HTq6PYjT0O-FqFQUBaFBRyJ3OxIXtVlaP_bN3YDPoRf8ElUBU/exec";
 
 let userID="";
@@ -254,7 +248,7 @@ document.getElementById("loading").style.display="none";
 document.getElementById("loginPage").style.display="flex";
 },1500);
 
-/* DAFTAR USER */
+/* USER LIST */
 
 let daftarUser=["admin"];
 
@@ -281,11 +275,7 @@ return;
 
 userID=username;
 
-if(username==="admin"){
-document.getElementById("judulUser").innerHTML="Dashboard Admin FINTRACK";
-}else{
-document.getElementById("judulUser").innerHTML="Dashboard Keuangan - "+username;
-}
+document.getElementById("judulUser").innerHTML="Dashboard - "+username;
 
 document.getElementById("loginPage").style.display="none";
 document.getElementById("app").style.display="block";
@@ -294,7 +284,7 @@ loadData();
 
 }
 
-/* LOAD DATA DARI GOOGLE SHEETS */
+/* LOAD DATA */
 
 function loadData(){
 
@@ -361,28 +351,15 @@ pengeluaran:pengeluaran,
 kategori:kategori
 };
 
-/* KIRIM DATA KE GOOGLE SHEETS */
-
 fetch(API_URL,{
 method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
+mode:"no-cors",
 body:JSON.stringify(data)
-})
-.then(res=>res.text())
-.then(res=>{
-alert("Data berhasil disimpan");
-location.reload();
-})
-.catch(err=>{
-alert("Gagal mengirim data");
 });
 
-/* RESET INPUT */
+alert("Data berhasil disimpan");
 
-document.getElementById("pemasukan").value="";
-document.getElementById("pengeluaran").value="";
+location.reload();
 
 }
 
