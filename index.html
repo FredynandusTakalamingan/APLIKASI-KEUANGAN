@@ -6,6 +6,8 @@
 <meta charset="UTF-8">
 <title>FINTRACK - Aplikasi Keuangan Siswa</title>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 
 body{
@@ -13,6 +15,8 @@ font-family:Arial;
 background:#f4f6f9;
 margin:0;
 }
+
+/* LOADING */
 
 #loading{
 position:fixed;
@@ -24,7 +28,10 @@ display:flex;
 justify-content:center;
 align-items:center;
 flex-direction:column;
+z-index:999;
 }
+
+/* LOGIN */
 
 #loginPage{
 height:100vh;
@@ -40,6 +47,11 @@ border-radius:15px;
 width:320px;
 box-shadow:0 5px 20px rgba(0,0,0,0.2);
 text-align:center;
+}
+
+.logo{
+width:70px;
+margin-bottom:10px;
 }
 
 input,select{
@@ -58,7 +70,14 @@ border:none;
 color:white;
 border-radius:6px;
 cursor:pointer;
+font-weight:bold;
 }
+
+button:hover{
+background:#1b5ed8;
+}
+
+/* APP */
 
 .container{
 padding:20px;
@@ -88,6 +107,7 @@ background:white;
 padding:20px;
 border-radius:10px;
 margin-top:20px;
+box-shadow:0 2px 10px rgba(0,0,0,0.1);
 }
 
 table{
@@ -113,18 +133,24 @@ color:white;
 
 <body>
 
+<!-- LOADING -->
+
 <div id="loading">
 <h1>FINTRACK</h1>
 <p>Memuat aplikasi...</p>
 </div>
 
+<!-- LOGIN -->
+
 <div id="loginPage" style="display:none">
 
 <div class="card">
 
+<img src="https://cdn-icons-png.flaticon.com/512/2331/2331943.png" class="logo">
+
 <h2>Login FINTRACK</h2>
 
-<input id="username" placeholder="Username (admin / siswa1-siswa20)">
+<input id="username" placeholder="Username (admin / siswa1 - siswa20)">
 <input id="password" type="password" placeholder="Password">
 
 <button onclick="login()">Login</button>
@@ -132,6 +158,8 @@ color:white;
 </div>
 
 </div>
+
+<!-- APP -->
 
 <div id="app" style="display:none" class="container">
 
@@ -156,15 +184,22 @@ color:white;
 
 </div>
 
+<!-- INPUT DATA -->
+
 <div class="section">
 
 <h3>Input Keuangan</h3>
 
+Tanggal
 <input type="date" id="tanggal">
 
-<input type="number" id="pemasukan" placeholder="Pemasukan">
+Pemasukan
+<input type="number" id="pemasukan">
 
-<input type="number" id="pengeluaran" placeholder="Pengeluaran">
+Pengeluaran
+<input type="number" id="pengeluaran">
+
+Kategori
 
 <select id="kategori">
 <option>Makan</option>
@@ -174,9 +209,13 @@ color:white;
 <option>Lainnya</option>
 </select>
 
-<button onclick="tambahData()">Simpan</button>
+<br><br>
+
+<button onclick="tambahData()">Simpan Data</button>
 
 </div>
+
+<!-- RIWAYAT -->
 
 <div class="section">
 
@@ -200,19 +239,30 @@ color:white;
 
 <script>
 
+/* GOOGLE APPS SCRIPT API */
+
 const API_URL="https://script.google.com/macros/s/AKfycbwRgLDXjQOsnZ5Z1y1HTq6PYjT0O-FqFQUBaFBRyJ3OxIXtVlaP_bN3YDPoRf8ElUBU/exec";
 
 let userID="";
 let totalMasuk=0;
 let totalKeluar=0;
 
-setTimeout(()=>{
+/* LOADING */
+
+setTimeout(function(){
 document.getElementById("loading").style.display="none";
 document.getElementById("loginPage").style.display="flex";
 },1500);
 
+/* USER LIST */
+
 let daftarUser=["admin"];
-for(let i=1;i<=20;i++){daftarUser.push("siswa"+i);}
+
+for(let i=1;i<=20;i++){
+daftarUser.push("siswa"+i);
+}
+
+/* LOGIN */
 
 function login(){
 
@@ -224,58 +274,44 @@ alert("Username tidak terdaftar");
 return;
 }
 
-if(password!="admin"){
+if(password!=="admin"){
 alert("Password salah");
 return;
 }
 
 userID=username;
 
-document.getElementById("judulUser").innerHTML=
-(username=="admin")?"Dashboard Admin":"Dashboard "+username;
+if(username==="admin"){
+document.getElementById("judulUser").innerHTML="Dashboard Admin FINTRACK";
+}else{
+document.getElementById("judulUser").innerHTML="Dashboard Keuangan - "+username;
+}
 
 document.getElementById("loginPage").style.display="none";
 document.getElementById("app").style.display="block";
 
-loadData();
-
 }
 
-function loadData(){
+/* TAMBAH DATA */
 
-fetch(API_URL)
-.then(res=>res.json())
-.then(data=>{
+function tambahData(){
 
-let tabel=document.getElementById("tabel");
+let tanggal=document.getElementById("tanggal").value;
 
-totalMasuk=0;
-totalKeluar=0;
+let pemasukan=parseInt(document.getElementById("pemasukan").value)||0;
+let pengeluaran=parseInt(document.getElementById("pengeluaran").value)||0;
 
-data.forEach(row=>{
+let kategori=document.getElementById("kategori").value;
 
-let nama=row[0];
-let tanggal=row[1];
-let pemasukan=parseInt(row[2])||0;
-let pengeluaran=parseInt(row[3])||0;
-let kategori=row[4];
+if(tanggal===""){
+alert("Tanggal harus diisi");
+return;
+}
 
-if(userID=="admin" || nama==userID){
-
-let r=tabel.insertRow();
-
-r.insertCell(0).innerHTML=nama;
-r.insertCell(1).innerHTML=tanggal;
-r.insertCell(2).innerHTML="Rp "+pemasukan.toLocaleString();
-r.insertCell(3).innerHTML="Rp "+pengeluaran.toLocaleString();
-r.insertCell(4).innerHTML=kategori;
+/* HITUNG SALDO */
 
 totalMasuk+=pemasukan;
 totalKeluar+=pengeluaran;
-
-}
-
-});
 
 let saldo=totalMasuk-totalKeluar;
 
@@ -283,21 +319,7 @@ document.getElementById("totalMasuk").innerHTML="Rp "+totalMasuk.toLocaleString(
 document.getElementById("totalKeluar").innerHTML="Rp "+totalKeluar.toLocaleString();
 document.getElementById("saldo").innerHTML="Rp "+saldo.toLocaleString();
 
-});
-
-}
-
-function tambahData(){
-
-let tanggal=document.getElementById("tanggal").value;
-let pemasukan=parseInt(document.getElementById("pemasukan").value)||0;
-let pengeluaran=parseInt(document.getElementById("pengeluaran").value)||0;
-let kategori=document.getElementById("kategori").value;
-
-if(tanggal==""){
-alert("Tanggal harus diisi");
-return;
-}
+/* DATA */
 
 let data={
 nama:userID,
@@ -307,20 +329,38 @@ pengeluaran:pengeluaran,
 kategori:kategori
 };
 
+/* KIRIM KE GOOGLE SHEETS */
+
 fetch(API_URL,{
 method:"POST",
-headers:{"Content-Type":"application/json"},
 body:JSON.stringify(data)
 })
-.then(res=>res.json())
+.then(res=>res.text())
 .then(res=>{
-if(res.status=="success"){
-alert("Data berhasil disimpan");
-location.reload();
-}else{
-alert("Gagal menyimpan data");
-}
+console.log("Server:",res);
+alert("Data berhasil disimpan ke Google Sheets");
+})
+.catch(err=>{
+console.log(err);
+alert("Gagal mengirim data");
 });
+
+/* TABEL */
+
+let tabel=document.getElementById("tabel");
+
+let row=tabel.insertRow();
+
+row.insertCell(0).innerHTML=userID;
+row.insertCell(1).innerHTML=tanggal;
+row.insertCell(2).innerHTML="Rp "+pemasukan.toLocaleString();
+row.insertCell(3).innerHTML="Rp "+pengeluaran.toLocaleString();
+row.insertCell(4).innerHTML=kategori;
+
+/* RESET */
+
+document.getElementById("pemasukan").value="";
+document.getElementById("pengeluaran").value="";
 
 }
 
