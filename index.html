@@ -4,7 +4,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>FINTRACK - Aplikasi Keuangan Siswa</title>
+<title>FINTRACK AI - Keuangan Siswa</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -15,8 +15,6 @@ font-family:Arial;
 background:#f4f6f9;
 margin:0;
 }
-
-/* LOADING */
 
 #loading{
 position:fixed;
@@ -30,8 +28,6 @@ align-items:center;
 flex-direction:column;
 z-index:999;
 }
-
-/* LOGIN */
 
 #loginPage{
 height:100vh;
@@ -76,8 +72,6 @@ font-weight:bold;
 button:hover{
 background:#1b5ed8;
 }
-
-/* APP */
 
 .container{
 padding:20px;
@@ -127,6 +121,14 @@ background:#2c7be5;
 color:white;
 }
 
+.chatBox{
+height:200px;
+overflow-y:auto;
+border:1px solid #ddd;
+padding:10px;
+margin-bottom:10px;
+}
+
 </style>
 
 </head>
@@ -136,7 +138,7 @@ color:white;
 <!-- LOADING -->
 
 <div id="loading">
-<h1>FINTRACK</h1>
+<h1>FINTRACK AI</h1>
 <p>Memuat aplikasi...</p>
 </div>
 
@@ -150,7 +152,7 @@ color:white;
 
 <h2>Login FINTRACK</h2>
 
-<input id="username" placeholder="Username (admin / siswa1 - siswa20)">
+<input id="username" placeholder="Username">
 <input id="password" type="password" placeholder="Password">
 
 <button onclick="login()">Login</button>
@@ -215,6 +217,16 @@ Kategori
 
 </div>
 
+<!-- GRAFIK -->
+
+<div class="section">
+
+<h3>Grafik Keuangan</h3>
+
+<canvas id="grafikKeuangan"></canvas>
+
+</div>
+
 <!-- RIWAYAT -->
 
 <div class="section">
@@ -235,17 +247,42 @@ Kategori
 
 </div>
 
+<!-- ANALISIS AI -->
+
+<div class="section">
+
+<h3>Analisis AI Keuangan</h3>
+
+<button onclick="analisisAI()">Analisis Sekarang</button>
+
+<div id="hasilAI" style="margin-top:15px"></div>
+
+</div>
+
+<!-- AI CHAT -->
+
+<div class="section">
+
+<h3>AI Chat Keuangan Siswa</h3>
+
+<div class="chatBox" id="chatBox"></div>
+
+<input id="chatInput" placeholder="Tanya tentang keuangan...">
+
+<button onclick="kirimChat()">Kirim</button>
+
+</div>
+
 </div>
 
 <script>
 
-/* GOOGLE APPS SCRIPT API */
-
-const API_URL="https://script.google.com/macros/s/AKfycbwRgLDXjQOsnZ5Z1y1HTq6PYjT0O-FqFQUBaFBRyJ3OxIXtVlaP_bN3YDPoRf8ElUBU/exec";
-
 let userID="";
+
 let totalMasuk=0;
 let totalKeluar=0;
+
+let dataKeuangan=[];
 
 /* LOADING */
 
@@ -254,25 +291,13 @@ document.getElementById("loading").style.display="none";
 document.getElementById("loginPage").style.display="flex";
 },1500);
 
-/* USER LIST */
-
-let daftarUser=["admin"];
-
-for(let i=1;i<=20;i++){
-daftarUser.push("siswa"+i);
-}
-
 /* LOGIN */
 
 function login(){
 
-let username=document.getElementById("username").value.toLowerCase();
-let password=document.getElementById("password").value;
+let username=document.getElementById("username").value;
 
-if(!daftarUser.includes(username)){
-alert("Username tidak terdaftar");
-return;
-}
+let password=document.getElementById("password").value;
 
 if(password!=="admin"){
 alert("Password salah");
@@ -281,13 +306,10 @@ return;
 
 userID=username;
 
-if(username==="admin"){
-document.getElementById("judulUser").innerHTML="Dashboard Admin FINTRACK";
-}else{
 document.getElementById("judulUser").innerHTML="Dashboard Keuangan - "+username;
-}
 
 document.getElementById("loginPage").style.display="none";
+
 document.getElementById("app").style.display="block";
 
 }
@@ -299,68 +321,154 @@ function tambahData(){
 let tanggal=document.getElementById("tanggal").value;
 
 let pemasukan=parseInt(document.getElementById("pemasukan").value)||0;
+
 let pengeluaran=parseInt(document.getElementById("pengeluaran").value)||0;
 
 let kategori=document.getElementById("kategori").value;
 
-if(tanggal===""){
-alert("Tanggal harus diisi");
-return;
-}
-
-/* HITUNG SALDO */
-
 totalMasuk+=pemasukan;
+
 totalKeluar+=pengeluaran;
 
 let saldo=totalMasuk-totalKeluar;
 
 document.getElementById("totalMasuk").innerHTML="Rp "+totalMasuk.toLocaleString();
+
 document.getElementById("totalKeluar").innerHTML="Rp "+totalKeluar.toLocaleString();
+
 document.getElementById("saldo").innerHTML="Rp "+saldo.toLocaleString();
 
-/* DATA */
-
-let data={
-nama:userID,
+dataKeuangan.push({
 tanggal:tanggal,
 pemasukan:pemasukan,
 pengeluaran:pengeluaran,
 kategori:kategori
-};
-
-/* KIRIM KE GOOGLE SHEETS */
-
-fetch(API_URL,{
-method:"POST",
-body:JSON.stringify(data)
-})
-.then(res=>res.text())
-.then(res=>{
-console.log("Server:",res);
-alert("Data berhasil disimpan ke Google Sheets");
-})
-.catch(err=>{
-console.log(err);
-alert("Gagal mengirim data");
 });
 
-/* TABEL */
+/* tabel */
 
 let tabel=document.getElementById("tabel");
 
 let row=tabel.insertRow();
 
 row.insertCell(0).innerHTML=userID;
+
 row.insertCell(1).innerHTML=tanggal;
+
 row.insertCell(2).innerHTML="Rp "+pemasukan.toLocaleString();
+
 row.insertCell(3).innerHTML="Rp "+pengeluaran.toLocaleString();
+
 row.insertCell(4).innerHTML=kategori;
 
-/* RESET */
+updateGrafik();
 
-document.getElementById("pemasukan").value="";
-document.getElementById("pengeluaran").value="";
+}
+
+/* GRAFIK */
+
+let chart;
+
+function updateGrafik(){
+
+let ctx=document.getElementById("grafikKeuangan");
+
+if(chart){
+chart.destroy();
+}
+
+chart=new Chart(ctx,{
+type:'bar',
+data:{
+labels:["Pemasukan","Pengeluaran"],
+datasets:[{
+label:"Keuangan",
+data:[totalMasuk,totalKeluar]
+}]
+}
+});
+
+}
+
+/* ANALISIS AI */
+
+function analisisAI(){
+
+let saldo=totalMasuk-totalKeluar;
+
+let hasil="";
+
+if(totalKeluar>totalMasuk){
+
+hasil+="⚠️ Pengeluaran lebih besar dari pemasukan.<br>";
+
+hasil+="Kurangi pengeluaran yang tidak penting.<br>";
+
+}
+
+else if(totalKeluar>totalMasuk*0.7){
+
+hasil+="💡 Pengeluaran cukup tinggi.<br>";
+
+hasil+="Cobalah menabung lebih banyak.<br>";
+
+}
+
+else{
+
+hasil+="✅ Keuangan kamu cukup sehat.<br>";
+
+}
+
+hasil+="<br>Total Saldo: Rp "+saldo.toLocaleString();
+
+document.getElementById("hasilAI").innerHTML=hasil;
+
+}
+
+/* AI CHAT */
+
+function kirimChat(){
+
+let input=document.getElementById("chatInput").value.toLowerCase();
+
+let chat=document.getElementById("chatBox");
+
+chat.innerHTML+="<b>Kamu:</b> "+input+"<br>";
+
+let jawaban="";
+
+if(input.includes("hemat")){
+
+jawaban="Tips hemat: catat semua pengeluaran dan prioritaskan kebutuhan.";
+
+}
+
+else if(input.includes("tabung")){
+
+jawaban="Idealnya tabung minimal 20% dari pemasukan.";
+
+}
+
+else if(input.includes("saldo")){
+
+let saldo=totalMasuk-totalKeluar;
+
+jawaban="Saldo kamu saat ini Rp "+saldo.toLocaleString();
+
+}
+
+else{
+
+jawaban="Coba tanyakan tentang menabung, hemat, atau saldo.";
+
+}
+
+chat.innerHTML+="<b>AI:</b> "+jawaban+"<br><br>";
+
+chat.scrollTop=chat.scrollHeight;
+
+document.getElementById("chatInput").value="";
 
 }
 
