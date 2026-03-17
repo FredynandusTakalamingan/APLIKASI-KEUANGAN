@@ -235,6 +235,19 @@ Kategori
 
 </div>
 
+<!-- AI CHAT -->
+
+<div class="section">
+
+<h3>AI Konsultasi Keuangan & Rupiah</h3>
+
+<div id="chatBox" style="height:200px;overflow:auto;border:1px solid #ddd;padding:10px;margin-bottom:10px;"></div>
+
+<input id="chatInput" placeholder="Tanya tentang keuangan atau rupiah..." style="width:80%">
+<button onclick="kirimChat()">Kirim</button>
+
+</div>
+
 </div>
 
 <script>
@@ -361,6 +374,73 @@ row.insertCell(4).innerHTML=kategori;
 
 document.getElementById("pemasukan").value="";
 document.getElementById("pengeluaran").value="";
+
+}
+
+/* AI CHAT */
+
+function kirimChat(){
+
+let input=document.getElementById("chatInput").value.toLowerCase();
+let chat=document.getElementById("chatBox");
+
+chat.innerHTML+="<b>Kamu:</b> "+input+"<br>";
+
+let saldo=totalMasuk-totalKeluar;
+
+let jawaban="";
+
+/* KEUANGAN */
+
+if(input.includes("saldo")){
+jawaban="Saldo kamu saat ini Rp "+saldo.toLocaleString();
+}
+
+else if(input.includes("hemat")){
+jawaban="Tips hemat: bedakan kebutuhan dan keinginan, serta catat semua pengeluaran.";
+}
+
+else if(input.includes("boros")){
+if(totalKeluar>totalMasuk){
+jawaban="Saat ini kamu cenderung boros. Yuk mulai kontrol pengeluaran.";
+}else{
+jawaban="Pengeluaranmu masih aman, tetap dijaga ya.";
+}
+}
+
+else if(input.includes("tabung")){
+jawaban="Disarankan menabung minimal 20% dari pemasukan.";
+}
+
+/* CBPR */
+
+else if(input.includes("cinta rupiah")){
+jawaban="Cinta Rupiah berarti menjaga uang dengan baik dan tidak merusaknya.";
+}
+
+else if(input.includes("bangga rupiah")){
+jawaban="Bangga Rupiah berarti menggunakan rupiah dalam transaksi sehari-hari.";
+}
+
+else if(input.includes("paham rupiah")){
+jawaban="Paham Rupiah berarti mampu mengelola uang dengan bijak.";
+}
+
+else if(input.includes("rupiah")){
+jawaban="Rupiah adalah alat pembayaran sah di Indonesia. Kita harus cinta, bangga, dan paham.";
+}
+
+/* DEFAULT */
+
+else{
+jawaban="Saya bisa membantu tentang keuangan, hemat, tabung, atau edukasi rupiah.";
+}
+
+chat.innerHTML+="<b>AI:</b> "+jawaban+"<br><br>";
+
+chat.scrollTop=chat.scrollHeight;
+
+document.getElementById("chatInput").value="";
 
 }
 
