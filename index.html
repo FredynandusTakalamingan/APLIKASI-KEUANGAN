@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>FINTRACK AI SMART</title>
+<title>FINTRACK AI SMART CLOUD</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -17,6 +17,9 @@ body{font-family:Arial;background:#f4f6f9;margin:0;}
 .section{background:white;padding:20px;border-radius:10px;margin-top:20px;}
 .chatBox{height:200px;overflow:auto;border:1px solid #ddd;padding:10px;}
 button{padding:10px;background:#2c7be5;color:white;border:none;border-radius:6px;}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+th,td{border:1px solid #ddd;padding:8px;text-align:center;}
+th{background:#2c7be5;color:white;}
 </style>
 
 </head>
@@ -25,7 +28,7 @@ button{padding:10px;background:#2c7be5;color:white;border:none;border-radius:6px
 
 <div class="container">
 
-<h2>FINTRACK AI SMART</h2>
+<h2>FINTRACK AI SMART CLOUD</h2>
 
 <!-- DASHBOARD -->
 <div class="dashboard">
@@ -53,7 +56,7 @@ button{padding:10px;background:#2c7be5;color:white;border:none;border-radius:6px
 <canvas id="chart"></canvas>
 </div>
 
-<!-- AI ANALISIS (AUTO) -->
+<!-- AI ANALISIS -->
 <div class="section">
 <h3>Analisis AI Otomatis</h3>
 <div id="aiAnalisis"></div>
@@ -64,6 +67,7 @@ button{padding:10px;background:#2c7be5;color:white;border:none;border-radius:6px
 
 <h3>Input Data</h3>
 
+<input type="date" id="tanggal">
 <input type="number" id="pemasukan" placeholder="Pemasukan">
 <input type="number" id="pengeluaran" placeholder="Pengeluaran">
 
@@ -77,6 +81,23 @@ button{padding:10px;background:#2c7be5;color:white;border:none;border-radius:6px
 <br><br>
 
 <button onclick="tambahData()">Simpan</button>
+
+</div>
+
+<!-- RIWAYAT -->
+<div class="section">
+
+<h3>Riwayat Keuangan</h3>
+
+<table id="tabel">
+<tr>
+<th>Nama</th>
+<th>Tanggal</th>
+<th>Pemasukan</th>
+<th>Pengeluaran</th>
+<th>Kategori</th>
+</tr>
+</table>
 
 </div>
 
@@ -96,27 +117,119 @@ button{padding:10px;background:#2c7be5;color:white;border:none;border-radius:6px
 
 <script>
 
+/* API GOOGLE SHEETS */
+const API_URL="ISI_URL_WEB_APP_ANDA_DISINI";
+
+/* USER (sementara statis, bisa dikembangkan login) */
+let userID="siswa1";
+
+/* DATA */
 let totalMasuk=0;
 let totalKeluar=0;
 let data=[];
 
 let chart;
 
+/* LOAD DATA DARI SHEETS */
+function loadData(){
+
+fetch(API_URL)
+.then(res=>res.json())
+.then(res=>{
+
+res.forEach(d=>{
+
+if(d.nama===userID){
+
+totalMasuk+=parseInt(d.pemasukan);
+totalKeluar+=parseInt(d.pengeluaran);
+
+data.push({
+masuk:parseInt(d.pemasukan),
+keluar:parseInt(d.pengeluaran),
+kategori:d.kategori
+});
+
+/* tabel */
+let tabel=document.getElementById("tabel");
+
+let row=tabel.insertRow();
+
+row.insertCell(0).innerHTML=d.nama;
+row.insertCell(1).innerHTML=d.tanggal;
+row.insertCell(2).innerHTML="Rp "+parseInt(d.pemasukan).toLocaleString();
+row.insertCell(3).innerHTML="Rp "+parseInt(d.pengeluaran).toLocaleString();
+row.insertCell(4).innerHTML=d.kategori;
+
+}
+
+});
+
+/* update semua */
+updateDashboard();
+updateChart();
+updateAI();
+
+});
+
+}
+
 /* TAMBAH DATA */
 function tambahData(){
 
+let tanggal=document.getElementById("tanggal").value;
 let masuk=parseInt(document.getElementById("pemasukan").value)||0;
 let keluar=parseInt(document.getElementById("pengeluaran").value)||0;
 let kategori=document.getElementById("kategori").value;
 
-totalMasuk+=masuk;
-totalKeluar+=keluar;
+if(tanggal===""){
+alert("Tanggal wajib diisi");
+return;
+}
 
-data.push({masuk,keluar,kategori});
+/* kirim ke sheets */
+fetch(API_URL,{
+method:"POST",
+body:JSON.stringify({
+nama:userID,
+tanggal:tanggal,
+pemasukan:masuk,
+pengeluaran:keluar,
+kategori:kategori
+})
+})
+.then(res=>res.text())
+.then(res=>{
+alert("Data tersimpan");
 
-updateDashboard();
-updateChart();
-updateAI();
+/* reload data */
+resetData();
+loadData();
+
+});
+
+/* reset input */
+document.getElementById("pemasukan").value="";
+document.getElementById("pengeluaran").value="";
+
+}
+
+/* RESET DATA (AGAR TIDAK DOUBLE) */
+function resetData(){
+
+totalMasuk=0;
+totalKeluar=0;
+data=[];
+
+document.getElementById("tabel").innerHTML=`
+<tr>
+<th>Nama</th>
+<th>Tanggal</th>
+<th>Pemasukan</th>
+<th>Pengeluaran</th>
+<th>Kategori</th>
+</tr>
+`;
 
 }
 
@@ -151,25 +264,21 @@ data:[totalMasuk,totalKeluar]
 
 }
 
-/* AI ANALISIS AUTO */
+/* AI ANALISIS */
 function updateAI(){
-
-let saldo=totalMasuk-totalKeluar;
 
 let text="";
 
-/* kondisi */
 if(totalKeluar>totalMasuk){
-text+="⚠️ Kamu mengalami defisit (boros)<br>";
+text+="⚠️ Boros (defisit)<br>";
 }
 else if(totalKeluar>totalMasuk*0.7){
-text+="💡 Pengeluaran cukup tinggi<br>";
+text+="💡 Pengeluaran tinggi<br>";
 }
 else{
 text+="✅ Keuangan sehat<br>";
 }
 
-/* kategori terbesar */
 let kategoriTotal={};
 
 data.forEach(d=>{
@@ -188,13 +297,10 @@ maxKat=k;
 }
 
 if(maxKat!=""){
-text+="📊 Pengeluaran terbesar: "+maxKat+"<br>";
+text+="📊 Terbesar: "+maxKat+"<br>";
 }
 
-/* rekomendasi */
-text+="<br>📈 Rekomendasi:<br>";
-text+="- Tabung minimal 20%<br>";
-text+="- Kurangi "+maxKat+" jika terlalu besar<br>";
+text+="<br>📈 Saran:<br>- Tabung 20%<br>- Kurangi "+maxKat;
 
 document.getElementById("aiAnalisis").innerHTML=text;
 
@@ -212,25 +318,17 @@ let saldo=totalMasuk-totalKeluar;
 
 let respon="";
 
-/* konteks pintar */
 if(input.includes("saldo")){
-respon="Saldo kamu saat ini Rp "+saldo.toLocaleString();
+respon="Saldo kamu Rp "+saldo.toLocaleString();
 }
 else if(input.includes("boros")){
-if(totalKeluar>totalMasuk){
-respon="Ya, kamu sedang boros. Kurangi pengeluaran.";
-}else{
-respon="Belum boros, tapi tetap kontrol pengeluaran.";
-}
+respon=(totalKeluar>totalMasuk)?"Kamu boros":"Masih aman";
 }
 else if(input.includes("hemat")){
-respon="Tips hemat: catat pengeluaran & batasi kebutuhan tidak penting.";
-}
-else if(input.includes("tabung")){
-respon="Disarankan menabung 20% dari pemasukan.";
+respon="Tips: catat semua pengeluaran.";
 }
 else{
-respon="Saya bisa bantu analisis keuanganmu. Coba tanya tentang saldo, hemat, atau boros.";
+respon="Tanya tentang saldo, hemat, atau boros.";
 }
 
 chat.innerHTML+="<b>AI:</b> "+respon+"<br><br>";
@@ -239,6 +337,11 @@ chat.scrollTop=chat.scrollHeight;
 document.getElementById("chatInput").value="";
 
 }
+
+/* AUTO LOAD SAAT HALAMAN DIBUKA */
+window.onload=function(){
+loadData();
+};
 
 </script>
 
