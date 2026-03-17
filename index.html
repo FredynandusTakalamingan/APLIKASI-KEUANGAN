@@ -1,172 +1,33 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
-
 <meta charset="UTF-8">
-<title>FINTRACK AI - Keuangan Siswa</title>
+<title>FINTRACK AI SMART</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
-body{
-font-family:Arial;
-background:#f4f6f9;
-margin:0;
-}
-
-#loading{
-position:fixed;
-width:100%;
-height:100vh;
-background:#2c7be5;
-color:white;
-display:flex;
-justify-content:center;
-align-items:center;
-flex-direction:column;
-z-index:999;
-}
-
-#loginPage{
-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-}
-
-.card{
-background:white;
-padding:35px;
-border-radius:15px;
-width:320px;
-box-shadow:0 5px 20px rgba(0,0,0,0.2);
-text-align:center;
-}
-
-.logo{
-width:70px;
-margin-bottom:10px;
-}
-
-input,select{
-width:92%;
-padding:10px;
-margin:6px;
-border-radius:6px;
-border:1px solid #ccc;
-}
-
-button{
-width:96%;
-padding:10px;
-background:#2c7be5;
-border:none;
-color:white;
-border-radius:6px;
-cursor:pointer;
-font-weight:bold;
-}
-
-button:hover{
-background:#1b5ed8;
-}
-
-.container{
-padding:20px;
-}
-
-.dashboard{
-display:flex;
-gap:15px;
-flex-wrap:wrap;
-margin-top:10px;
-}
-
-.box{
-flex:1;
-min-width:150px;
-color:white;
-padding:20px;
-border-radius:10px;
-}
-
+body{font-family:Arial;background:#f4f6f9;margin:0;}
+.container{padding:20px;}
+.dashboard{display:flex;gap:15px;flex-wrap:wrap;}
+.box{flex:1;min-width:150px;color:white;padding:20px;border-radius:10px;}
 .saldo{background:#2c7be5;}
 .masuk{background:#00a65a;}
 .keluar{background:#dd4b39;}
-
-.section{
-background:white;
-padding:20px;
-border-radius:10px;
-margin-top:20px;
-box-shadow:0 2px 10px rgba(0,0,0,0.1);
-}
-
-table{
-border-collapse:collapse;
-width:100%;
-margin-top:10px;
-}
-
-th,td{
-border:1px solid #ddd;
-padding:8px;
-text-align:center;
-}
-
-th{
-background:#2c7be5;
-color:white;
-}
-
-.chatBox{
-height:200px;
-overflow-y:auto;
-border:1px solid #ddd;
-padding:10px;
-margin-bottom:10px;
-}
-
+.section{background:white;padding:20px;border-radius:10px;margin-top:20px;}
+.chatBox{height:200px;overflow:auto;border:1px solid #ddd;padding:10px;}
+button{padding:10px;background:#2c7be5;color:white;border:none;border-radius:6px;}
 </style>
 
 </head>
 
 <body>
 
-<!-- LOADING -->
+<div class="container">
 
-<div id="loading">
-<h1>FINTRACK AI</h1>
-<p>Memuat aplikasi...</p>
-</div>
+<h2>FINTRACK AI SMART</h2>
 
-<!-- LOGIN -->
-
-<div id="loginPage" style="display:none">
-
-<div class="card">
-
-<img src="https://cdn-icons-png.flaticon.com/512/2331/2331943.png" class="logo">
-
-<h2>Login FINTRACK</h2>
-
-<input id="username" placeholder="Username">
-<input id="password" type="password" placeholder="Password">
-
-<button onclick="login()">Login</button>
-
-</div>
-
-</div>
-
-<!-- APP -->
-
-<div id="app" style="display:none" class="container">
-
-<h2 id="judulUser"></h2>
-
+<!-- DASHBOARD -->
 <div class="dashboard">
 
 <div class="box saldo">
@@ -175,101 +36,59 @@ margin-bottom:10px;
 </div>
 
 <div class="box masuk">
-<h4>Total Pemasukan</h4>
-<h2 id="totalMasuk">Rp 0</h2>
+<h4>Pemasukan</h4>
+<h2 id="masuk">Rp 0</h2>
 </div>
 
 <div class="box keluar">
-<h4>Total Pengeluaran</h4>
-<h2 id="totalKeluar">Rp 0</h2>
+<h4>Pengeluaran</h4>
+<h2 id="keluar">Rp 0</h2>
 </div>
 
 </div>
 
-<!-- INPUT DATA -->
+<!-- GRAFIK -->
+<div class="section">
+<h3>Grafik Keuangan</h3>
+<canvas id="chart"></canvas>
+</div>
 
+<!-- AI ANALISIS (AUTO) -->
+<div class="section">
+<h3>Analisis AI Otomatis</h3>
+<div id="aiAnalisis"></div>
+</div>
+
+<!-- INPUT -->
 <div class="section">
 
-<h3>Input Keuangan</h3>
+<h3>Input Data</h3>
 
-Tanggal
-<input type="date" id="tanggal">
-
-Pemasukan
-<input type="number" id="pemasukan">
-
-Pengeluaran
-<input type="number" id="pengeluaran">
-
-Kategori
+<input type="number" id="pemasukan" placeholder="Pemasukan">
+<input type="number" id="pengeluaran" placeholder="Pengeluaran">
 
 <select id="kategori">
 <option>Makan</option>
 <option>Transport</option>
-<option>Pulsa</option>
 <option>Hiburan</option>
 <option>Lainnya</option>
 </select>
 
 <br><br>
 
-<button onclick="tambahData()">Simpan Data</button>
+<button onclick="tambahData()">Simpan</button>
 
 </div>
 
-<!-- GRAFIK -->
-
+<!-- CHAT -->
 <div class="section">
 
-<h3>Grafik Keuangan</h3>
+<h3>AI Konsultasi Keuangan</h3>
 
-<canvas id="grafikKeuangan"></canvas>
+<div class="chatBox" id="chat"></div>
 
-</div>
-
-<!-- RIWAYAT -->
-
-<div class="section">
-
-<h3>Riwayat Keuangan</h3>
-
-<table id="tabel">
-
-<tr>
-<th>Nama</th>
-<th>Tanggal</th>
-<th>Pemasukan</th>
-<th>Pengeluaran</th>
-<th>Kategori</th>
-</tr>
-
-</table>
-
-</div>
-
-<!-- ANALISIS AI -->
-
-<div class="section">
-
-<h3>Analisis AI Keuangan</h3>
-
-<button onclick="analisisAI()">Analisis Sekarang</button>
-
-<div id="hasilAI" style="margin-top:15px"></div>
-
-</div>
-
-<!-- AI CHAT -->
-
-<div class="section">
-
-<h3>AI Chat Keuangan Siswa</h3>
-
-<div class="chatBox" id="chatBox"></div>
-
-<input id="chatInput" placeholder="Tanya tentang keuangan...">
-
-<button onclick="kirimChat()">Kirim</button>
+<input id="chatInput" placeholder="Tanya keuangan...">
+<button onclick="chatAI()">Kirim</button>
 
 </div>
 
@@ -277,112 +96,54 @@ Kategori
 
 <script>
 
-let userID="";
-
 let totalMasuk=0;
 let totalKeluar=0;
+let data=[];
 
-let dataKeuangan=[];
-
-/* LOADING */
-
-setTimeout(function(){
-document.getElementById("loading").style.display="none";
-document.getElementById("loginPage").style.display="flex";
-},1500);
-
-/* LOGIN */
-
-function login(){
-
-let username=document.getElementById("username").value;
-
-let password=document.getElementById("password").value;
-
-if(password!=="admin"){
-alert("Password salah");
-return;
-}
-
-userID=username;
-
-document.getElementById("judulUser").innerHTML="Dashboard Keuangan - "+username;
-
-document.getElementById("loginPage").style.display="none";
-
-document.getElementById("app").style.display="block";
-
-}
+let chart;
 
 /* TAMBAH DATA */
-
 function tambahData(){
 
-let tanggal=document.getElementById("tanggal").value;
-
-let pemasukan=parseInt(document.getElementById("pemasukan").value)||0;
-
-let pengeluaran=parseInt(document.getElementById("pengeluaran").value)||0;
-
+let masuk=parseInt(document.getElementById("pemasukan").value)||0;
+let keluar=parseInt(document.getElementById("pengeluaran").value)||0;
 let kategori=document.getElementById("kategori").value;
 
-totalMasuk+=pemasukan;
+totalMasuk+=masuk;
+totalKeluar+=keluar;
 
-totalKeluar+=pengeluaran;
+data.push({masuk,keluar,kategori});
+
+updateDashboard();
+updateChart();
+updateAI();
+
+}
+
+/* DASHBOARD */
+function updateDashboard(){
 
 let saldo=totalMasuk-totalKeluar;
 
-document.getElementById("totalMasuk").innerHTML="Rp "+totalMasuk.toLocaleString();
-
-document.getElementById("totalKeluar").innerHTML="Rp "+totalKeluar.toLocaleString();
-
 document.getElementById("saldo").innerHTML="Rp "+saldo.toLocaleString();
-
-dataKeuangan.push({
-tanggal:tanggal,
-pemasukan:pemasukan,
-pengeluaran:pengeluaran,
-kategori:kategori
-});
-
-/* tabel */
-
-let tabel=document.getElementById("tabel");
-
-let row=tabel.insertRow();
-
-row.insertCell(0).innerHTML=userID;
-
-row.insertCell(1).innerHTML=tanggal;
-
-row.insertCell(2).innerHTML="Rp "+pemasukan.toLocaleString();
-
-row.insertCell(3).innerHTML="Rp "+pengeluaran.toLocaleString();
-
-row.insertCell(4).innerHTML=kategori;
-
-updateGrafik();
+document.getElementById("masuk").innerHTML="Rp "+totalMasuk.toLocaleString();
+document.getElementById("keluar").innerHTML="Rp "+totalKeluar.toLocaleString();
 
 }
 
 /* GRAFIK */
+function updateChart(){
 
-let chart;
+let ctx=document.getElementById("chart");
 
-function updateGrafik(){
-
-let ctx=document.getElementById("grafikKeuangan");
-
-if(chart){
-chart.destroy();
-}
+if(chart) chart.destroy();
 
 chart=new Chart(ctx,{
 type:'bar',
 data:{
 labels:["Pemasukan","Pengeluaran"],
 datasets:[{
-label:"Keuangan",
+label:"Perbandingan",
 data:[totalMasuk,totalKeluar]
 }]
 }
@@ -390,84 +151,91 @@ data:[totalMasuk,totalKeluar]
 
 }
 
-/* ANALISIS AI */
-
-function analisisAI(){
+/* AI ANALISIS AUTO */
+function updateAI(){
 
 let saldo=totalMasuk-totalKeluar;
 
-let hasil="";
+let text="";
 
+/* kondisi */
 if(totalKeluar>totalMasuk){
-
-hasil+="⚠️ Pengeluaran lebih besar dari pemasukan.<br>";
-
-hasil+="Kurangi pengeluaran yang tidak penting.<br>";
-
+text+="⚠️ Kamu mengalami defisit (boros)<br>";
 }
-
 else if(totalKeluar>totalMasuk*0.7){
-
-hasil+="💡 Pengeluaran cukup tinggi.<br>";
-
-hasil+="Cobalah menabung lebih banyak.<br>";
-
+text+="💡 Pengeluaran cukup tinggi<br>";
 }
-
 else{
+text+="✅ Keuangan sehat<br>";
+}
 
-hasil+="✅ Keuangan kamu cukup sehat.<br>";
+/* kategori terbesar */
+let kategoriTotal={};
+
+data.forEach(d=>{
+if(!kategoriTotal[d.kategori]) kategoriTotal[d.kategori]=0;
+kategoriTotal[d.kategori]+=d.keluar;
+});
+
+let maxKat="";
+let maxVal=0;
+
+for(let k in kategoriTotal){
+if(kategoriTotal[k]>maxVal){
+maxVal=kategoriTotal[k];
+maxKat=k;
+}
+}
+
+if(maxKat!=""){
+text+="📊 Pengeluaran terbesar: "+maxKat+"<br>";
+}
+
+/* rekomendasi */
+text+="<br>📈 Rekomendasi:<br>";
+text+="- Tabung minimal 20%<br>";
+text+="- Kurangi "+maxKat+" jika terlalu besar<br>";
+
+document.getElementById("aiAnalisis").innerHTML=text;
 
 }
 
-hasil+="<br>Total Saldo: Rp "+saldo.toLocaleString();
-
-document.getElementById("hasilAI").innerHTML=hasil;
-
-}
-
-/* AI CHAT */
-
-function kirimChat(){
+/* CHAT AI */
+function chatAI(){
 
 let input=document.getElementById("chatInput").value.toLowerCase();
-
-let chat=document.getElementById("chatBox");
+let chat=document.getElementById("chat");
 
 chat.innerHTML+="<b>Kamu:</b> "+input+"<br>";
 
-let jawaban="";
-
-if(input.includes("hemat")){
-
-jawaban="Tips hemat: catat semua pengeluaran dan prioritaskan kebutuhan.";
-
-}
-
-else if(input.includes("tabung")){
-
-jawaban="Idealnya tabung minimal 20% dari pemasukan.";
-
-}
-
-else if(input.includes("saldo")){
-
 let saldo=totalMasuk-totalKeluar;
 
-jawaban="Saldo kamu saat ini Rp "+saldo.toLocaleString();
+let respon="";
 
+/* konteks pintar */
+if(input.includes("saldo")){
+respon="Saldo kamu saat ini Rp "+saldo.toLocaleString();
 }
-
+else if(input.includes("boros")){
+if(totalKeluar>totalMasuk){
+respon="Ya, kamu sedang boros. Kurangi pengeluaran.";
+}else{
+respon="Belum boros, tapi tetap kontrol pengeluaran.";
+}
+}
+else if(input.includes("hemat")){
+respon="Tips hemat: catat pengeluaran & batasi kebutuhan tidak penting.";
+}
+else if(input.includes("tabung")){
+respon="Disarankan menabung 20% dari pemasukan.";
+}
 else{
-
-jawaban="Coba tanyakan tentang menabung, hemat, atau saldo.";
-
+respon="Saya bisa bantu analisis keuanganmu. Coba tanya tentang saldo, hemat, atau boros.";
 }
 
-chat.innerHTML+="<b>AI:</b> "+jawaban+"<br><br>";
+chat.innerHTML+="<b>AI:</b> "+respon+"<br><br>";
 
 chat.scrollTop=chat.scrollHeight;
-
 document.getElementById("chatInput").value="";
 
 }
