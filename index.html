@@ -1,111 +1,450 @@
-function doPost(e) {
-  try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
+<!DOCTYPE html>
+<html lang="id">
 
-    if (!sheet) {
-      return jsonOutput({
-        success: false,
-        message: "Sheet1 tidak ditemukan"
-      });
-    }
+<head>
 
-    var data = JSON.parse(e.postData.contents);
+<meta charset="UTF-8">
+<title>FINTRACK - Aplikasi Keuangan Siswa</title>
 
-    sheet.appendRow([
-      data.nama || "",
-      data.tanggal || "",
-      Number(data.pemasukan || 0),
-      Number(data.pengeluaran || 0),
-      data.kategori || "",
-      new Date()
-    ]);
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    return jsonOutput({
-      success: true,
-      message: "Data berhasil disimpan"
-    });
+<style>
 
-  } catch (err) {
-    return jsonOutput({
-      success: false,
-      message: err.toString()
-    });
-  }
+body{
+font-family:Arial;
+background:#f4f6f9;
+margin:0;
 }
 
-function doGet(e) {
-  try {
-    var action = e.parameter.action || "";
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
+/* LOADING */
 
-    if (!sheet) {
-      return jsonOutput({
-        success: false,
-        message: "Sheet1 tidak ditemukan"
-      });
-    }
-
-    if (action === "list") {
-      var user = (e.parameter.user || "").toLowerCase().trim();
-      var lastRow = sheet.getLastRow();
-      var lastCol = sheet.getLastColumn();
-
-      if (lastRow < 2) {
-        return jsonOutput({
-          success: true,
-          data: []
-        });
-      }
-
-      var values = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
-      var result = [];
-
-      values.forEach(function(row) {
-        var nama = String(row[0] || "").toLowerCase().trim();
-        var tanggal = row[1];
-        var pemasukan = Number(row[2] || 0);
-        var pengeluaran = Number(row[3] || 0);
-        var kategori = row[4] || "";
-
-        if (user === "admin" || user === nama) {
-          result.push({
-            nama: nama,
-            tanggal: formatTanggal(tanggal),
-            pemasukan: pemasukan,
-            pengeluaran: pengeluaran,
-            kategori: kategori
-          });
-        }
-      });
-
-      return jsonOutput({
-        success: true,
-        data: result
-      });
-    }
-
-    return jsonOutput({
-      success: true,
-      message: "FINTRACK API READY"
-    });
-
-  } catch (err) {
-    return jsonOutput({
-      success: false,
-      message: err.toString()
-    });
-  }
+#loading{
+position:fixed;
+width:100%;
+height:100vh;
+background:#2c7be5;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+z-index:999;
 }
 
-function formatTanggal(tanggal) {
-  if (Object.prototype.toString.call(tanggal) === "[object Date]" && !isNaN(tanggal)) {
-    return Utilities.formatDate(tanggal, Session.getScriptTimeZone(), "yyyy-MM-dd");
-  }
-  return tanggal ? String(tanggal) : "";
+/* LOGIN */
+
+#loginPage{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
 }
 
-function jsonOutput(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
+.card{
+background:white;
+padding:35px;
+border-radius:15px;
+width:320px;
+box-shadow:0 5px 20px rgba(0,0,0,0.2);
+text-align:center;
 }
+
+.logo{
+width:70px;
+margin-bottom:10px;
+}
+
+input,select{
+width:92%;
+padding:10px;
+margin:6px;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+button{
+width:96%;
+padding:10px;
+background:#2c7be5;
+border:none;
+color:white;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+}
+
+button:hover{
+background:#1b5ed8;
+}
+
+/* APP */
+
+.container{
+padding:20px;
+}
+
+.dashboard{
+display:flex;
+gap:15px;
+flex-wrap:wrap;
+margin-top:10px;
+}
+
+.box{
+flex:1;
+min-width:150px;
+color:white;
+padding:20px;
+border-radius:10px;
+}
+
+.saldo{background:#2c7be5;}
+.masuk{background:#00a65a;}
+.keluar{background:#dd4b39;}
+
+.section{
+background:white;
+padding:20px;
+border-radius:10px;
+margin-top:20px;
+box-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
+
+table{
+border-collapse:collapse;
+width:100%;
+margin-top:10px;
+}
+
+th,td{
+border:1px solid #ddd;
+padding:8px;
+text-align:center;
+}
+
+th{
+background:#2c7be5;
+color:white;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- LOADING -->
+
+<div id="loading">
+<h1>FINTRACK</h1>
+<p>Memuat aplikasi...</p>
+</div>
+
+<!-- LOGIN -->
+
+<div id="loginPage" style="display:none">
+
+<div class="card">
+
+<img src="https://cdn-icons-png.flaticon.com/512/2331/2331943.png" class="logo">
+
+<h2>Login FINTRACK</h2>
+
+<input id="username" placeholder="Username (admin / siswa1 - siswa20)">
+<input id="password" type="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+
+</div>
+
+</div>
+
+<!-- APP -->
+
+<div id="app" style="display:none" class="container">
+
+<h2 id="judulUser"></h2>
+
+<div class="dashboard">
+
+<div class="box saldo">
+<h4>Saldo</h4>
+<h2 id="saldo">Rp 0</h2>
+</div>
+
+<div class="box masuk">
+<h4>Total Pemasukan</h4>
+<h2 id="totalMasuk">Rp 0</h2>
+</div>
+
+<div class="box keluar">
+<h4>Total Pengeluaran</h4>
+<h2 id="totalKeluar">Rp 0</h2>
+</div>
+
+</div>
+
+<!-- INPUT DATA -->
+
+<div class="section">
+
+<h3>Input Keuangan</h3>
+
+Tanggal
+<input type="date" id="tanggal">
+
+Pemasukan
+<input type="number" id="pemasukan">
+
+Pengeluaran
+<input type="number" id="pengeluaran">
+
+Kategori
+
+<select id="kategori">
+<option>Makan</option>
+<option>Transport</option>
+<option>Pulsa</option>
+<option>Hiburan</option>
+<option>Lainnya</option>
+</select>
+
+<br><br>
+
+<button onclick="tambahData()">Simpan Data</button>
+
+</div>
+
+<!-- RIWAYAT -->
+
+<div class="section">
+
+<h3>Riwayat Keuangan</h3>
+
+<table id="tabel">
+
+<tr>
+<th>Nama</th>
+<th>Tanggal</th>
+<th>Pemasukan</th>
+<th>Pengeluaran</th>
+<th>Kategori</th>
+</tr>
+
+</table>
+
+</div>
+
+<!-- AI CHAT -->
+
+<div class="section">
+
+<h3>AI Konsultasi Keuangan & Rupiah</h3>
+
+<div id="chatBox" style="height:200px;overflow:auto;border:1px solid #ddd;padding:10px;margin-bottom:10px;"></div>
+
+<input id="chatInput" placeholder="Tanya tentang keuangan atau rupiah..." style="width:80%">
+<button onclick="kirimChat()">Kirim</button>
+
+</div>
+
+</div>
+
+<script>
+
+/* GOOGLE APPS SCRIPT API */
+
+const API_URL="https://script.google.com/macros/s/AKfycbwRgLDXjQOsnZ5Z1y1HTq6PYjT0O-FqFQUBaFBRyJ3OxIXtVlaP_bN3YDPoRf8ElUBU/exec";
+
+let userID="";
+let totalMasuk=0;
+let totalKeluar=0;
+
+/* LOADING */
+
+setTimeout(function(){
+document.getElementById("loading").style.display="none";
+document.getElementById("loginPage").style.display="flex";
+},1500);
+
+/* USER LIST */
+
+let daftarUser=["admin"];
+
+for(let i=1;i<=20;i++){
+daftarUser.push("siswa"+i);
+}
+
+/* LOGIN */
+
+function login(){
+
+let username=document.getElementById("username").value.toLowerCase();
+let password=document.getElementById("password").value;
+
+if(!daftarUser.includes(username)){
+alert("Username tidak terdaftar");
+return;
+}
+
+if(password!=="admin"){
+alert("Password salah");
+return;
+}
+
+userID=username;
+
+if(username==="admin"){
+document.getElementById("judulUser").innerHTML="Dashboard Admin FINTRACK";
+}else{
+document.getElementById("judulUser").innerHTML="Dashboard Keuangan - "+username;
+}
+
+document.getElementById("loginPage").style.display="none";
+document.getElementById("app").style.display="block";
+
+}
+
+/* TAMBAH DATA */
+
+function tambahData(){
+
+let tanggal=document.getElementById("tanggal").value;
+
+let pemasukan=parseInt(document.getElementById("pemasukan").value)||0;
+let pengeluaran=parseInt(document.getElementById("pengeluaran").value)||0;
+
+let kategori=document.getElementById("kategori").value;
+
+if(tanggal===""){
+alert("Tanggal harus diisi");
+return;
+}
+
+/* HITUNG SALDO */
+
+totalMasuk+=pemasukan;
+totalKeluar+=pengeluaran;
+
+let saldo=totalMasuk-totalKeluar;
+
+document.getElementById("totalMasuk").innerHTML="Rp "+totalMasuk.toLocaleString();
+document.getElementById("totalKeluar").innerHTML="Rp "+totalKeluar.toLocaleString();
+document.getElementById("saldo").innerHTML="Rp "+saldo.toLocaleString();
+
+/* DATA */
+
+let data={
+nama:userID,
+tanggal:tanggal,
+pemasukan:pemasukan,
+pengeluaran:pengeluaran,
+kategori:kategori
+};
+
+/* KIRIM KE GOOGLE SHEETS */
+
+fetch(API_URL,{
+method:"POST",
+body:JSON.stringify(data)
+})
+.then(res=>res.text())
+.then(res=>{
+console.log("Server:",res);
+alert("Data berhasil disimpan ke Google Sheets");
+})
+.catch(err=>{
+console.log(err);
+alert("Gagal mengirim data");
+});
+
+/* TABEL */
+
+let tabel=document.getElementById("tabel");
+
+let row=tabel.insertRow();
+
+row.insertCell(0).innerHTML=userID;
+row.insertCell(1).innerHTML=tanggal;
+row.insertCell(2).innerHTML="Rp "+pemasukan.toLocaleString();
+row.insertCell(3).innerHTML="Rp "+pengeluaran.toLocaleString();
+row.insertCell(4).innerHTML=kategori;
+
+/* RESET */
+
+document.getElementById("pemasukan").value="";
+document.getElementById("pengeluaran").value="";
+
+}
+
+/* AI CHAT */
+
+function kirimChat(){
+
+let input=document.getElementById("chatInput").value.toLowerCase();
+let chat=document.getElementById("chatBox");
+
+chat.innerHTML+="<b>Kamu:</b> "+input+"<br>";
+
+let saldo=totalMasuk-totalKeluar;
+
+let jawaban="";
+
+/* KEUANGAN */
+
+if(input.includes("saldo")){
+jawaban="Saldo kamu saat ini Rp "+saldo.toLocaleString();
+}
+
+else if(input.includes("hemat")){
+jawaban="Tips hemat: bedakan kebutuhan dan keinginan, serta catat semua pengeluaran.";
+}
+
+else if(input.includes("boros")){
+if(totalKeluar>totalMasuk){
+jawaban="Saat ini kamu cenderung boros. Yuk mulai kontrol pengeluaran.";
+}else{
+jawaban="Pengeluaranmu masih aman, tetap dijaga ya.";
+}
+}
+
+else if(input.includes("tabung")){
+jawaban="Disarankan menabung minimal 20% dari pemasukan.";
+}
+
+/* CBPR */
+
+else if(input.includes("cinta rupiah")){
+jawaban="Cinta Rupiah berarti menjaga uang dengan baik dan tidak merusaknya.";
+}
+
+else if(input.includes("bangga rupiah")){
+jawaban="Bangga Rupiah berarti menggunakan rupiah dalam transaksi sehari-hari.";
+}
+
+else if(input.includes("paham rupiah")){
+jawaban="Paham Rupiah berarti mampu mengelola uang dengan bijak.";
+}
+
+else if(input.includes("rupiah")){
+jawaban="Rupiah adalah alat pembayaran sah di Indonesia. Kita harus cinta, bangga, dan paham.";
+}
+
+/* DEFAULT */
+
+else{
+jawaban="Saya bisa membantu tentang keuangan, hemat, tabung, atau edukasi rupiah.";
+}
+
+chat.innerHTML+="<b>AI:</b> "+jawaban+"<br><br>";
+
+chat.scrollTop=chat.scrollHeight;
+
+document.getElementById("chatInput").value="";
+
+}
+
+</script>
+
+</body>
+</html>
